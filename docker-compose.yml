@@ -1,0 +1,17 @@
+services:
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: prompt-engineering-jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/workspace/notebooks
+      - ./requirements.txt:/workspace/requirements.txt:ro
+      - ./.env:/workspace/.env:ro 
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+    env_file:
+      - .env
+    restart: unless-stopped
