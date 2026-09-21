@@ -1,17 +1,16 @@
 services:
-  jupyter:
+  marimo:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: prompt-engineering-jupyter
+    container_name: prompt-engineering-marimo
     ports:
       - "8888:8888"
     volumes:
       - ./notebooks:/workspace/notebooks
-      - ./requirements.txt:/workspace/requirements.txt:ro
-      - ./.env:/workspace/.env:ro 
-    environment:
-      - JUPYTER_ENABLE_LAB=yes
+      - ./pyproject.toml:/workspace/pyproject.toml:ro
+      - ./uv.lock:/workspace/uv.lock:ro
+      - ./.env:/workspace/.env:ro
     env_file:
       - .env
     restart: unless-stopped

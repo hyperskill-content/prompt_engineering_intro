@@ -1,0 +1,14 @@
+[project]
+name = "prompt-engineering-intro"
+version = "0.1.0"
+description = "Introduction to prompt engineering notebooks"
+requires-python = ">=3.14"
+dependencies = [
+    "marimo>=0.24.0",
+    "openai>=1.0",
+    "pydantic>=2.0",
+    "python-dotenv>=1.0",
+    "litellm>=1.0",
+    "pandas>=2.0",
+    "requests>=2.0",
+]

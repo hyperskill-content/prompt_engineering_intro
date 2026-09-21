@@ -1,9 +1,0 @@
-aiohttp
-jupyter
-jupyterlab
-notebook
-ipykernel
-requests
-pydantic
-python-dotenv
-openai
