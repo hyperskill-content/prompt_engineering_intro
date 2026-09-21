@@ -1,6 +1,6 @@
-# Introduction to prompt engineering
+# Intro to LLMs and pipelines
 
-Notebooks in this repo are [marimo](https://marimo.io) notebooks: plain, git-diffable `.py` files with reactive cells, run either through the marimo UI or locally via `uv`.
+This repo contains support notebooks for topics used or covered in the first module. Notebooks in this repo are [marimo](https://marimo.io) notebooks: plain, git-diffable `.py` files with reactive cells, run either through the marimo UI or locally via `uv`.
 
 ## Notebooks
 
