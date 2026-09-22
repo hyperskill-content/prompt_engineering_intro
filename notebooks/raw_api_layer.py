@@ -16,13 +16,13 @@ def _(mo):
     mo.md(r"""
     # The raw API layer
 
-    The course proxy speaks several APIs. In this notebook we use two of them, both OpenAI-style, through the plain `openai` SDK, with no `litellm` package on our side.
+    The course proxy speaks several APIs. In this notebook we use two of them, both OpenAI-style, through the plain `openai` SDK.
 
-    Chat Completions takes `messages` in and returns `choices`. It's the long-standing shape, and the closest thing to a portable standard. Most other providers and inference servers (Groq, Together, vLLM, Ollama) offer an OpenAI-compatible endpoint, and libraries like LangChain and LlamaIndex use the same shape whenever you point them at one, which is why pointing the `openai` client at a different `base_url` is such a common trick. The proxy builds on that: it accepts Chat Completions for every provider it routes to (OpenAI, Anthropic, Mistral, whatever's configured) and handles the translation on the other end. Our Chat Completions calls go through its unified endpoint and can reach any of them.
+    Chat Completions takes `messages` in and returns `choices`. It's the long-standing format, and the closest thing to a portable standard. Most other providers and inference servers (Groq, Together, vLLM, Ollama) offer an OpenAI-compatible endpoint, and libraries like LangChain and LlamaIndex use the same shape whenever you point them at one, which is why pointing the `openai` client at a different `base_url` is common. The proxy accepts Chat Completions for every provider it routes to and handles the translation on the other end. Our Chat Completions calls go through its unified endpoint and can reach any of them.
 
     Responses takes `input` in and returns `output` out, but it's more than a different shape. It's OpenAI's own product, and much of it runs on their servers: conversation state, built-in tools, remote MCP integration. Other providers and gateways can accept the request shape, but they don't ship the same feature set, and things like storage end up configured somewhere else. So it isn't a portable protocol the way Chat Completions is, at least for now. Our Responses calls go through the proxy's OpenAI-only pass-through, which gets us the actual product.
 
-    Then we look at tool calling: how the model signals that it wants a tool called instead of answering, how that signal differs between the two APIs, and how the harness (your code, not the model) turns it into a function call and a follow-up turn.
+    Then we look at tool calling: how the model signals that it wants to call a tool, and how the harness (your code, not the model) turns that signal into a function call and a follow-up turn.
     """)
     return
 
@@ -32,11 +32,11 @@ def _(mo):
     mo.md(r"""
     ## What a tool call actually is
 
-    A model has no clock, no database connection, no way to run code. Whatever it knows was baked in at training time. Tool calling gives it a way around that: describe capabilities in its context, and let it ask for it instead of answering directly.
+    A model has no clock, no database connection, no way to run code. Whatever it knows was baked in at training time. Tool calling allows to describe capabilities in the model's context, and let it ask for a tool instead of answering from it's internal knowledge.
 
-    There's no separate tool-calling mode the model switches into. It's doing what it always does: predicting the next token, one at a time. During training it was taught that certain requests call for a specific pattern instead of a normal-language reply: a name from the tool list, plus a JSON object matching that tool's schema. The exact recipe (fine-tuning, reinforcement learning, whatever mix a given lab uses) doesn't matter here. What matters is that the model isn't aware it triggered anything. It generated tokens in a shape your code knows how to recognize.
+    There's no separate tool-calling mode the model switches into. It's predicting the next token, as always. During training it was taught that certain requests call for a specific pattern instead of a normal-language reply: a name from the tool list, plus a JSON object matching that tool's schema. The exact recipe (fine-tuning, reinforcement learning, whatever mix a given lab uses) doesn't matter here. What matters is that the model isn't aware it triggered anything. It generated tokens in a shape your code knows how to recognize.
 
-    For your own functions, acting on that shape is the harness's job, not the model's. Recognizing it usually falls to the API, which looks at what came out and wraps it in a discrete field so your code doesn't have to guess (that's part 2 below). Some tools are the exception: the built-in ones in the Responses API run on OpenAI's servers, so your code never executes them. This notebook focuses on your own functions: how the output is shaped, how it's signaled, and how a plain function call, run by your code, gets its result back to the model.
+    For your own functions, acting on that shape is the harness's job. Recognizing it usually falls to the API, which looks at what came out and wraps it in a discrete field so your code doesn't have to guess. Some tools are the exception: the built-in ones in the Responses API run on OpenAI's servers, so your code never executes them. This notebook focuses on custom functions, covering the shape of the output, how you know it's a tool call, and the function call your code makes to get a result back to the model.
     """)
     return
 
@@ -75,8 +75,7 @@ def _(os):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    Chat Completions, on the other hand, doesn't care who's behind it. Pick a provider. The
-    default is deliberately not OpenAI, to make the point:
+    Chat Completions doesn't depend on the provider as much.
     """)
     return
 
@@ -179,9 +178,9 @@ def _(cc_model_picker, json, mo, shape_cc_response, shape_responses_response):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    Three providers give one shape. The Chat Completions replies from OpenAI, Anthropic, and Mistral all look alike: the text at `choices[0].message.content`, a `finish_reason` on the choice, the role on the message. Only the values differ, like the model name, the id, and the wording. That's the proxy's translation at. Anthropic's native Messages format looks nothing like this.
+    The Chat Completions replies from OpenAI, Anthropic, and Mistral all look alike: the text at `choices[0].message.content`, a `finish_reason` on the choice, the role on the message. Only the values differ, like the model name, the id, and the wording. That's the proxy's translation. Anthropic's native Messages format doesn't look this way.
 
-    The format only changes when we switch APIs. Responses puts the text in `output_text` and describes everything the model produced as typed items in `output`, so the type (`message`, here) tells you what you got. Chat Completions has no equivalent, and you infer the same thing from `finish_reason` and which fields on the message are filled in. That second difference is the one that matters once we bring tools into it.
+    The format only changes when we switch APIs. Responses puts the text in `output_text` and describes everything the model produced as typed items in `output`, so the type (`message`, here) tells you what you got. Chat Completions has no equivalent, and you infer the same thing from `finish_reason` and which fields on the message are filled in. That second difference matters once we bring tools into it.
     """)
     return
 
@@ -263,9 +262,7 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    Both APIs get the same `WEATHER_SCHEMA` and `CURRENCY_SCHEMA`, and only the formatting around them changes. That's a preview of the rest of the notebook: the concepts are shared, but the field names aren't.
-
-    Now the tools themselves. They're mocks, deterministic with no network call, so the notebook stays self-contained. Swap either one for a real API call and nothing else here changes, as long as the function keeps the same signature and return shape:
+    Both APIs get the same `WEATHER_SCHEMA` and `CURRENCY_SCHEMA`, only the formatting around them changes. The tools are mocks, deterministic with no network call, so the notebook stays self-contained. They can be swapped for live API calls and nothing else here changes, as long as the function keeps the same signature and return shape:
     """)
     return
 
@@ -303,7 +300,7 @@ def _(mo):
     mo.md(r"""
     ### 1. Structured output enforcement
 
-    Getting valid JSON out of `arguments` doesn't have to be a hope. Many serving stacks use constrained decoding: at each generation step, the sampler masks out any token that would make the output violate the tool's JSON Schema (wrong type, invalid key, malformed syntax). The mask comes from a grammar or finite-state machine derived from the schema. The model is still just predicting tokens, but the decoder mechanically prevents invalid JSON from ever being sampled.
+    Getting valid JSON out of `arguments` can be enforced. Many serving stacks use constrained decoding: at each generation step, the sampler masks out any token that would make the output violate the tool's JSON Schema (wrong type, invalid key, malformed syntax). The mask comes from a grammar or finite-state machine derived from the schema. The model is still just predicting tokens, but the decoder mechanically prevents invalid JSON from being sampled.
 
     `strict: True` on the tool definitions above is the setting for this. OpenAI documents it as turning on constrained decoding. Other providers accept the same flag through the proxy and returned schema-valid `arguments` in our testing, but they don't necessarily document how they guarantee it. It could be constrained decoding, or something else.
 
@@ -560,11 +557,6 @@ def _(mo):
 
     The field names differ, but the loop is identical in both APIs: the model asks for a tool, the harness runs it, and the model writes its answer from the result. Agent frameworks are mostly this loop with more scaffolding around it.
     """)
-    return
-
-
-@app.cell
-def _():
     return
 
 

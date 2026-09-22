@@ -11,7 +11,7 @@ def _():
     return (mo,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     # litellm: one call, many providers
@@ -39,13 +39,10 @@ def _(mo):
      "contents": [{"role": "user", "parts": [{"text": "Hi"}]}]}
     # reply text at: candidates[0].content.parts[0].text
     ```
-    Switch providers and you normally have to rewrite how you build requests and parse responses.
-
-    `litellm` uses OpenAI's Chat Completions shape as the interface for every provider: the same
-    `messages` list going in, the same `choices[0].message.content` coming out, whichever provider answers. What changes is who translates that shape into the provider's real API.
+    Switch providers and you normally have to rewrite how you build requests and parse responses. `litellm` uses OpenAI's Chat Completions shape as the interface for every provider: the same `messages` list going in, the same `choices[0].message.content` coming out, whichever provider answers. What changes is who translates that shape into the provider's real API.
 
     Point `litellm.completion()` at Anthropic with your Anthropic key, and litellm does the translation locally before sending the request. Point it at this proxy instead, as we do below, and litellm just sends an OpenAI-shaped request over the wire. The proxy, which is also litellm running server-side, translates it into the target
-    provider's format on the other end. That's also why the key you were issued works for every provider: it's a key to the proxy, not to any one of them.
+    provider's format on the other end. That's also why the key you were issued works for every provider in the instance: it's a key to the proxy, not to any one of them.
 
     The rest of this notebook covers four things a shared format allows: swapping providers with a one-line change, running several at once, streaming, and handling errors without a branch per provider.
     """)
@@ -80,7 +77,7 @@ def _(os):
     return api_base, api_key, litellm, openai
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     Below, the same call runs against whichever provider you pick. Only
@@ -149,7 +146,7 @@ def _(litellm, mo, response):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     ## One prompt, several providers at once
@@ -230,7 +227,7 @@ def _(mo, race_results):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     ## Streaming
@@ -279,10 +276,10 @@ def _(
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Same errors, whichever provider breaks
+    ## Standard errors
 
     Every provider fails differently: different status codes, different error bodies, different field names for what went wrong. litellm maps all of that onto OpenAI's exception classes, like `openai.NotFoundError` and `openai.RateLimitError`, which all inherit from `openai.APIError`. So error handling doesn't need a branch per provider either.
 
@@ -332,11 +329,11 @@ def _(
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md("""
     ---
-    One interface allows to swap providers by changing a string, run several at once, stream from any of them, and catch every provider's failures the same way. All four work because litellm translates each provider's format into one shape. To see how much that saves you, try the same request against a provider's direct API with litellm stripped away.
+    One interface allows to swap providers by changing a string, run several at once, stream from any of them, and catch every provider's failures the same way. All four work because litellm translates each provider's format into one shape. To see how much that saves you, you can try the same request against a provider's direct API with litellm stripped away.
     """)
     return
 
