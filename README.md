@@ -4,6 +4,7 @@ This repo contains support notebooks for topics used or covered in the first mod
 
 ## Notebooks
 
+- `prompting.py`: prompting basics through one running example, turning requests into GitHub search queries: message roles, temperature, few-shot, chain-of-thought, structured output and validation, and handling ambiguous requests.
 - `litellm_intro.py`: one function call, run against several providers through the course's LiteLLM proxy.
 - `model_zoo.py`: the proxy's full model catalog, plus a live test drive of a subset of it.
 - `raw_api_layer.py`: Chat Completions vs the Responses API through the same proxy, and an intro on how tool calling works.

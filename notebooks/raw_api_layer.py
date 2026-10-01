@@ -1,7 +1,7 @@
 import marimo
 
 __generated_with = "0.24.0"
-app = marimo.App(width="medium")
+app = marimo.App(width="medium", app_title="The raw API layer")
 
 
 @app.cell
